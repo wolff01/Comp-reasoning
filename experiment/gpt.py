@@ -39,7 +39,7 @@ except FileNotFoundError:
 results.append(response_dict)
 
 with open(file_path, 'w') as file:
-    # TODO: iterate on results[-1].choices[-1].message.content
-    json.dump(results, file, indent=4)
+    print(results["choices"][-1].message.content)
+    json.dump(results["choices"][-1].message.content, file, indent=4)
 
 print("Result added successfully!")
