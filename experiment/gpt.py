@@ -2,7 +2,7 @@ import os
 import json
 from litellm import completion
 from dotenv import load_dotenv
-from prettytable import PrettyTable
+import sqlite3
 
 load_dotenv()
 
@@ -21,67 +21,54 @@ response = completion(
         "role": "user"
     }]
 )
-results = []
+
 try:
     response_content = response['choices'][0]['message']['content']
-    results = response_content.split(', ')
     response_dict = json.loads(response_content)
+    print("Response Dictionary:", response_dict)
 except (KeyError, IndexError, TypeError, json.JSONDecodeError) as e:
-    # print(f"Error processing response: {e}")
+    print(f"Error processing response: {e}")
     response_dict = None
 
-file_path = 'gpt.json'
-print(results)
+db_file = "results.db"
+conn = sqlite3.connect(db_file)
+cursor = conn.cursor()
 
-try:
-    with open(file_path, 'r') as file:
-        results = json.load(file)
-        if not isinstance(results, list):
-            results = []
-
-except FileNotFoundError:
-    results = []
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS blackjack_results (
+    id TEXT PRIMARY KEY,
+    date TEXT,
+    choice TEXT,
+    reasoning TEXT
+)
+""")
 
 if response_dict:
-    results.append(response_dict)
+    print("Inserting into SQLite:", response_dict)
+    cursor.execute("""
+    INSERT OR IGNORE INTO blackjack_results (id, date, choice, reasoning)
+    VALUES (?, ?, ?, ?)
+    """, (response_dict.get("id"), response_dict.get("date"), response_dict.get("choice"), response_dict.get("reasoning")))
+    conn.commit()
 
-with open(file_path, 'w') as file:
-    json.dump(results, file, indent=4)
+cursor.execute("SELECT * FROM blackjack_results")
+rows = cursor.fetchall()
+print("Current Database Rows:", rows)
 
-# print("Result added successfully!")
+def display_table():
+    cursor.execute("SELECT * FROM blackjack_results")
+    rows = cursor.fetchall()
 
-def create_table(results):
-    table = PrettyTable()
-    table.field_names = ["ID", "Date", "Choice", "Reasoning"]
+    header = f"{'ID':<20} {'Date':<20} {'Choice':<15} {'Reasoning':<50}"
+    print(header)
+    print("-" * len(header))
 
-    table_data = []
-
-    for item in results:
-        if isinstance(item, dict):
-            row = {
-                "ID": item.get("id", "N/A"),
-                "Date": item.get("date", "N/A"),
-                "Choice": item.get("choice", "N/A"),
-                "Reasoning": item.get("reasoning", "N/A")
-            }
-            table.add_row(list(row.values()))
-            table_data.append(row)
-        # else:
-            # print(f"Skipping invalid item: {item}")
-
-    print("\nTable of Results:")
-    print(table)
-
-    with open('gpttable.json', 'w') as table_file:
-        json.dump(table_data, table_file, indent=4)
-    # print("Table data saved to gpttable.json")
+    for row in rows:
+        print(f"{row[0]:<20} {row[1]:<20} {row[2]:<15} {row[3]:<50}")
 
 try:
-    with open(file_path, 'r') as file:
-        updated_results = json.load(file)
-        if isinstance(updated_results, list):
-            create_table(updated_results)
-        else:
-            print("Invalid data format in JSON file.")
-except FileNotFoundError:
-    print("No JSON file found.")
+    display_table()
+except Exception as e:
+    print(f"Error displaying data: {e}")
+
+conn.close()
