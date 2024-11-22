@@ -25,9 +25,7 @@ response = completion(
 try:
     response_content = response['choices'][0]['message']['content']
     response_dict = json.loads(response_content)
-    print("Response Dictionary:", response_dict)
 except (KeyError, IndexError, TypeError, json.JSONDecodeError) as e:
-    print(f"Error processing response: {e}")
     response_dict = None
 
 db_file = "results.db"
@@ -53,7 +51,6 @@ if response_dict:
 
 cursor.execute("SELECT * FROM blackjack_results")
 rows = cursor.fetchall()
-print("Current Database Rows:", rows)
 
 def display_table():
     cursor.execute("SELECT * FROM blackjack_results")
@@ -64,7 +61,7 @@ def display_table():
     print("-" * len(header))
 
     for row in rows:
-        print(f"{row[0]:<20} {row[1]:<20} {row[2]:<15} {row[3]:<50}")
+        print(f"|{row[0]:<20} | {row[1]:<20} | {row[2]:<15} | {row[3]:<50}|")
 
 try:
     display_table()
