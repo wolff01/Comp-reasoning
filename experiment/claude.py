@@ -7,15 +7,14 @@ from dotenv import load_dotenv
 import sqlite3
 
 load_dotenv()
-cards = input("""""")
 
-answer = f"""You are playing the game of blackjack against a dealer at a casino. The table rules are as follows: dealer stands on a 17. If the dealer is showing a card with a 10 or greater value players may choose to insure their hands at half their bet. You have a {cards}; the dealer shows a 10. Respond what your choice is in this scenario using the following JSON schema:
+answer = f"""You are playing the game of blackjack against a dealer at a casino. The table rules are as follows: dealer stands on a 17. If the dealer is showing a card with a 10 or greater value players may choose to insure their hands at half their bet. You have a 2 and a King; the dealer shows a 10. Respond what your choice is in this scenario using the following JSON schema:
 {
 "choice":"",
 "reasoning":""
 }"""
 
-model = "gpt-4o"
+model = "claude"
 
 response = completion(
     model=model,
