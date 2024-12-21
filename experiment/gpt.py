@@ -6,41 +6,57 @@ from litellm import completion
 from dotenv import load_dotenv
 import sqlite3
 
+# Load environment variables
 load_dotenv()
-cards = input("""""")
 
-answer = f"""You are playing the game of blackjack against a dealer at a casino. The table rules are as follows: dealer stands on a 17. If the dealer is showing a card with a 10 or greater value players may choose to insure their hands at half their bet. You have a {cards}; the dealer shows a 10. Respond what your choice is in this scenario using the following JSON schema:
-{
+# Accept card input
+cards = input("Enter your cards: ").strip()
+
+# Prompt for AI model completion
+answer = f"""You are playing the game of blackjack against a dealer at a casino. The table rules are as follows: dealer stands on a 17. If the dealer is showing a card with a 10 or greater value, players may choose to insure their hands at half their bet. You have a {cards}; the dealer shows a 10. Respond with your choice using the following JSON schema:
+{{
 "choice":"",
 "reasoning":""
-}"""
+}}"""
 
+# Specify model to use
 model = "gpt-4o"
 
-response = completion(
-    model=model,
-    messages=[{
-        "content": answer,
-        "role": "user"
-    }]
-)
-
-now = datetime.now()
-
+# Try to get a response from the model
 try:
-    response_content = response['choices'][0]['message']['content']
-    response_content = re.sub("```(\s+)?json(\s+)?\\n(\s+)?|(\s+)?\\n(\s+)?```","",response_content)
-    response_dict = json.loads(response_content)
-    response_dict['id'] = response['id']
-    response_dict['model'] = response['model']
-    response_dict['date'] = f"{now.year}-{now.month}-{now.day}"
-except (KeyError, IndexError, TypeError, json.JSONDecodeError) as e:
-    response_dict = None
+    response = completion(
+        model=model,
+        messages=[{
+            "content": answer,
+            "role": "user"
+        }]
+    )
+except Exception as e:
+    print(f"Error with model completion: {e}")
+    response = None
 
+# Parse response
+now = datetime.now()
+response_dict = None
+
+if response:
+    try:
+        # Extract and clean JSON response
+        response_content = response['choices'][0]['message']['content']
+        response_content = re.sub(r"```(\s+)?json(\s+)?\n(\s+)?|(\s+)?\n(\s+)?```", "", response_content)
+        response_dict = json.loads(response_content)
+        response_dict['id'] = response.get('id', f"manual_{now.timestamp()}")
+        response_dict['model'] = response.get('model', model)
+        response_dict['date'] = f"{now.year}-{now.month:02}-{now.day:02}"
+    except (KeyError, IndexError, TypeError, json.JSONDecodeError) as e:
+        print(f"Error parsing response: {e}")
+
+# SQLite database setup
 db_file = "results.db"
 conn = sqlite3.connect(db_file)
 cursor = conn.cursor()
 
+# Create table if not exists
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS blackjack_results (
     id TEXT PRIMARY KEY,
@@ -51,31 +67,48 @@ CREATE TABLE IF NOT EXISTS blackjack_results (
 )
 """)
 
+# Insert response into the database
 if response_dict:
-    print("Inserting into SQLite:", response_dict)
-    cursor.execute("""
-    INSERT OR IGNORE INTO blackjack_results (id, model, date, choice, reasoning)
-    VALUES (?, ?, ?, ?, ?)
-    """, (response_dict.get("id"), response_dict.get("model"), response_dict.get("date"), response_dict.get("choice"), response_dict.get("reasoning")))
-    conn.commit()
+    try:
+        print("Inserting into SQLite:", response_dict)
+        cursor.execute("""
+        INSERT OR IGNORE INTO blackjack_results (id, model, date, choice, reasoning)
+        VALUES (?, ?, ?, ?, ?)
+        """, (
+            response_dict.get("id"),
+            response_dict.get("model"),
+            response_dict.get("date"),
+            response_dict.get("choice"),
+            response_dict.get("reasoning")
+        ))
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Error inserting into database: {e}")
 
-cursor.execute("SELECT * FROM blackjack_results")
-rows = cursor.fetchall()
+# Function to display and write the table
+def display_and_save_table():
+    try:
+        cursor.execute("SELECT * FROM blackjack_results")
+        rows = cursor.fetchall()
 
-def display_table():
-    cursor.execute("SELECT * FROM blackjack_results")
-    rows = cursor.fetchall()
+        header = f"{'ID':<20} {'Model':<20} {'Date':<15} {'Choice':<15} {'Reasoning':<50}"
+        table = [header, "-" * len(header)]
 
-    header = f"{'ID':<20} {'model':<20} {'Date':<20} {'Choice':<15} {'Reasoning':<50}"
-    print(header)
-    print("-" * len(header))
+        for row in rows:
+            table.append(f"{row[0]:<20} {row[1]:<20} {row[2]:<15} {row[3]:<15} {row[4]:<50}")
 
-    for row in rows:
-        print(f"|{row[0]:<20} | {row[1]:<20} | {row[2]:<15} | {row[3]:<50}| {row[4]:<20}")
+        # Print table in the terminal
+        print("\n".join(table))
 
-try:
-    display_table()
-except Exception as e:
-    print(f"Error displaying data: {e}")
+        # Save table to a .txt file
+        with open("gpttable.txt", "w") as file:
+            file.write("\n".join(table))
+        print("\nTable has been saved to gpttable.txt")
+    except sqlite3.Error as e:
+        print(f"Error displaying or saving data: {e}")
 
+# Display and save the table
+display_and_save_table()
+
+# Close the database connection
 conn.close()
