@@ -6,23 +6,18 @@ from litellm import completion
 from dotenv import load_dotenv
 import sqlite3
 
-# Load environment variables
 load_dotenv()
 
-# Accept card input
 cards = input("Enter your cards: ").strip()
 
-# Prompt for AI model completion
 answer = f"""You are playing the game of blackjack against a dealer at a casino. The table rules are as follows: dealer stands on a 17. If the dealer is showing a card with a 10 or greater value, players may choose to insure their hands at half their bet. You have a {cards}; the dealer shows a 10. Respond with your choice using the following JSON schema:
 {{
 "choice":"",
 "reasoning":""
 }}"""
 
-# Specify model to use
 model = "gpt-4o"
 
-# Try to get a response from the model
 try:
     response = completion(
         model=model,
@@ -35,13 +30,11 @@ except Exception as e:
     print(f"Error with model completion: {e}")
     response = None
 
-# Parse response
 now = datetime.now()
 response_dict = None
 
 if response:
     try:
-        # Extract and clean JSON response
         response_content = response['choices'][0]['message']['content']
         response_content = re.sub(r"```(\s+)?json(\s+)?\n(\s+)?|(\s+)?\n(\s+)?```", "", response_content)
         response_dict = json.loads(response_content)
@@ -51,12 +44,10 @@ if response:
     except (KeyError, IndexError, TypeError, json.JSONDecodeError) as e:
         print(f"Error parsing response: {e}")
 
-# SQLite database setup
 db_file = "results.db"
 conn = sqlite3.connect(db_file)
 cursor = conn.cursor()
 
-# Create table if not exists
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS blackjack_results (
     id TEXT PRIMARY KEY,
@@ -67,7 +58,6 @@ CREATE TABLE IF NOT EXISTS blackjack_results (
 )
 """)
 
-# Insert response into the database
 if response_dict:
     try:
         print("Inserting into SQLite:", response_dict)
@@ -85,7 +75,6 @@ if response_dict:
     except sqlite3.Error as e:
         print(f"Error inserting into database: {e}")
 
-# Function to display and write the table
 def display_and_save_table():
     try:
         cursor.execute("SELECT * FROM blackjack_results")
@@ -97,18 +86,14 @@ def display_and_save_table():
         for row in rows:
             table.append(f"{row[0]:<20} {row[1]:<20} {row[2]:<15} {row[3]:<15} {row[4]:<50}")
 
-        # Print table in the terminal
         print("\n".join(table))
 
-        # Save table to a .txt file
         with open("gpttable.txt", "w") as file:
             file.write("\n".join(table))
         print("\nTable has been saved to gpttable.txt")
     except sqlite3.Error as e:
         print(f"Error displaying or saving data: {e}")
 
-# Display and save the table
 display_and_save_table()
 
-# Close the database connection
 conn.close()
