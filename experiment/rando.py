@@ -1,6 +1,8 @@
 import json
 import random
+from datetime import datetime
 
+# Deck of cards
 deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 11]
 
 def random_decision():
@@ -27,46 +29,57 @@ def simulate_blackjack_hand(hand):
 
     if not split:
         decision = random_decision()
-        choice.append(decision)
+        choice.append(f"{decision} | {hand}")
         print(f"Decision: {decision.capitalize()}")
-        for hand in range(21):
+        while sum(hand) < 21:  # Use sum(hand) to compare the total hand value
             if decision == 'hit':
-                hand = hit_hand(hand)
-                if hand <= 21:
+                new_card = int(input("Input Card: "))  # Input new card
+                hand.append(new_card)  # Add new card to the hand
+                print(f"New hand: {hand} (Total: {sum(hand)})")
+                if sum(hand) < 21:
                     decision = random_decision()
+                    choice.append(f"{decision} | {hand}")
                     print(f"Decision: {decision.capitalize()}")
-                elif hand == 21:
+                elif sum(hand) == 21:
                     print("21!!!!")
-                    return hand
-                elif hand >= 21:
+                    choice.append(f"21 | {hand}")
+                    break
+                else:
                     print("Bust")
-                    return hand
+                    choice.append(f"Bust | {hand}")
+                    break
+            elif decision == 'stand':
+                choice.append(f"Stand | {hand}")
+                break
         return split, decision if not split else "split"
 
+# Input initial cards
 card_1 = int(input('Input card: '))
 card_2 = int(input('Input card: '))
 hand = [card_1, card_2]
 choice = []
+
 simulate_blackjack_hand(hand)
 
-try:
-    decision_dict = choice.to_dict()
-except AttributeError:
-    decision_dict = str(choice)
-
-file_path = 'random.json'
-
+# Save results to rando.txt
+file_path = 'rando.txt'
 try:
     with open(file_path, 'r') as file:
-        results = json.load(file)
-        if not isinstance(results, list):
-            results = []
+        results = file.read().splitlines()
 except FileNotFoundError:
     results = []
 
-results.append(decision_dict)
+# Get current date and time
+current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+# Add results with date, model, hand, and decisions
+model_name = "Random Decision Model"
+results.append(f"{current_date} | {model_name} | Initial hand: {hand}")
+for entry in choice:
+    results.append(f"{current_date} | {model_name} | {entry}")
 
 with open(file_path, 'w') as file:
-    json.dump(results, file, indent=4)
+    file.write("Date | Model | Choice/Hand\n")  # Header for the table
+    file.write("\n".join(results))
 
-print("Result added successfully!")
+print("Result added successfully to rando.txt!")

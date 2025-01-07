@@ -1,4 +1,5 @@
 import os
+import google.auth
 import re
 import json
 from datetime import datetime
@@ -88,9 +89,9 @@ def display_and_save_table():
 
         print("\n".join(table))
 
-        with open("gpttable.txt", "w") as file:
+        with open("claudetable.txt", "w") as file:
             file.write("\n".join(table))
-        print("\nTable has been saved to gpttable.txt")
+        print("\nTable has been saved to claudetable.txt")
     except sqlite3.Error as e:
         print(f"Error displaying or saving data: {e}")
 

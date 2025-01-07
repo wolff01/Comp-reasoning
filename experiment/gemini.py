@@ -16,7 +16,7 @@ answer = f"""You are playing the game of blackjack against a dealer at a casino.
 "reasoning":""
 }}"""
 
-model = "claude"
+model = "gemini-pro"
 
 try:
     response = completion(
