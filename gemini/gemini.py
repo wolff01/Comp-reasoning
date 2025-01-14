@@ -9,8 +9,9 @@ import sqlite3
 load_dotenv()
 
 cards = input("Enter your cards: ").strip()
+dealer = input("Enter dealer card: ").strip()
 
-answer = f"""You are playing the game of blackjack against a dealer at a casino. The table rules are as follows: dealer stands on a 17. If the dealer is showing a card with a 10 or greater value, players may choose to insure their hands at half their bet. You have a {cards}; the dealer shows a 10. Respond with your choice using the following JSON schema:
+answer = f"""You are playing the game of blackjack against a dealer at a casino. The table rules are as follows: dealer stands on a 17. If the dealer is showing a card with a 10 or Ace, you may choose to take insurace and half your bet. If insurance is not taken, you must say either hit, stand, split or double down as your choice as well on the first two cards, if given more than 3 cards you must only hit or stand. You have a {cards}, The dealer has a {dealer} Respond with your choice using the following JSON schema:
 {{
 "choice":"",
 "reasoning":""
@@ -60,7 +61,7 @@ CREATE TABLE IF NOT EXISTS blackjack_results (
 
 if response_dict:
     try:
-        print("Inserting into SQLite:", response_dict)
+        print(response_dict)
         cursor.execute("""
         INSERT OR IGNORE INTO blackjack_results (id, model, date, choice, reasoning)
         VALUES (?, ?, ?, ?, ?)
@@ -86,11 +87,11 @@ def display_and_save_table():
         for row in rows:
             table.append(f"{row[0]:<20} {row[1]:<20} {row[2]:<15} {row[3]:<15} {row[4]:<50}")
 
-        print("\n".join(table))
+        # print("\n".join(table))
 
-        with open("claudetable.txt", "w") as file:
+        with open("geminitable.txt", "w") as file:
             file.write("\n".join(table))
-        print("\nTable has been saved to table.txt")
+        print("\nTable has been saved to gpttable.txt")
     except sqlite3.Error as e:
         print(f"Error displaying or saving data: {e}")
 
