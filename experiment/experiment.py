@@ -8,6 +8,18 @@ import sqlite3
 
 load_dotenv()
 
+model = ""
+
+model_input = input("Input model name: ")
+if model_input == "gemini":
+    model = "gemini/gemini-1.5-pro"
+elif model_input == "gpt":
+    model = "gpt-4o"
+elif model_input == "claude":
+    model = "anthropic/claude-3-5-sonnet-20240620"
+else:
+    ValueError
+
 cards = input("Enter your cards: ").strip()
 dealer = input("Enter dealer card: ").strip()
 
@@ -17,7 +29,6 @@ answer = f"""You are playing the game of blackjack against a dealer at a casino.
 "reasoning":""
 }}"""
 
-model = "gpt-4o"
 
 try:
     response = completion(
@@ -45,7 +56,7 @@ if response:
     except (KeyError, IndexError, TypeError, json.JSONDecodeError) as e:
         print(f"Error parsing response: {e}")
 
-db_file = "results.db"
+db_file = f"{model_input}results.db"
 conn = sqlite3.connect(db_file)
 cursor = conn.cursor()
 
@@ -89,9 +100,9 @@ def display_and_save_table():
 
         # print("\n".join(table))
 
-        with open("gpttable.txt", "w") as file:
+        with open(f"{model_input}table.txt", "w") as file:
             file.write("\n".join(table))
-        print("\nTable has been saved to gpttable.txt")
+        print(f"\nTable has been saved to {model_input}table.txt")
     except sqlite3.Error as e:
         print(f"Error displaying or saving data: {e}")
 
