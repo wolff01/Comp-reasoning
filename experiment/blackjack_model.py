@@ -1,49 +1,36 @@
-# Define card values
 CARD_VALUES = {
     '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
     'Jack': 10, 'Queen': 10, 'King': 10, 'Ace': 11
 }
 
-# Function to calculate hand value
 def calculate_hand_value(cards):
     value = sum(CARD_VALUES[card.title()] for card in cards)
     aces = cards.count('Ace')
 
-    # Adjust for aces if value exceeds 21
     while value > 21 and aces > 0:
         value -= 10
         aces -= 1
 
     return value
 
-# Function to display hand
-def display_hands(player_hand, dealer_hand):
-    print("\nYour hand:", player_hand, "(Value:", calculate_hand_value(player_hand), ")")
-    print("\nDealer hand:", dealer_hand, "(Value:", calculate_hand_value(dealer_hand), ")")
-
-# Blackjack game loop
 def play_blackjack(insert_player, insert_dealer):
-    move = ""
-    # Get input from the user
-    insert_player = ""
-    cards_player = insert_player.split()
+    cards_player = ' '.join(insert_player)
 
-    insert_dealer = ""
-    cards_dealer = insert_dealer.split()
+    cards_dealer = ' '.join(insert_dealer)
 
-    # Remove "and" if present
-    if "and" in cards_player:
-        cards_player.remove("and")
-    if "and" in cards_dealer:
-        cards_dealer.remove("and")
+    player = cards_player.split()
+    dealer = cards_dealer.split()
+    if 'and' in cards_player:
+        cards_player.remove('and')
+    if 'and' in cards_dealer:
+        cards_dealer.remove('and')
 
-    player_hand = cards_player.copy()  # Start with user-input cards
-    dealer_hand = cards_dealer.copy()
+    player_hand = player.copy()
+    dealer_hand = dealer.copy()
 
     dealer_card_value = CARD_VALUES[dealer_hand[0].title()]
 
     while True:
-        display_hands(player_hand, dealer_hand)
         player_value = calculate_hand_value(player_hand)
 
         if player_value > 21:
@@ -53,183 +40,70 @@ def play_blackjack(insert_player, insert_dealer):
         if player_value < 9:
             if player_hand[0] == player_hand[1] and dealer_card_value <= 7:
                 if len(player_hand) == 2:
-                    print("Book recommends: Split")
-                    if move == "split":
-                        return 0
-                    elif move != "split":
-                        return 1       
+                    return 'split'   
             else:
-                if move == "hit":
-                    return 0
-                elif move == "stand" or "double down":
-                    return 1
-                else:
-                    return 2
-
+                return "hit"
         elif player_value == 9:
             if dealer_card_value == 2 or dealer_card_value >= 8:
-                if move == "hit":
-                    return 0
-                elif move == "stand" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "hit"
             else:
-                if move == "double":
-                    return 0
-                elif move == "stand" or "hit":
-                    return 1
-                else:
-                    return 2
-
+                return "double down"
         elif player_value == 10 or player_value == 11:
-            if player_hand[0] == player_hand[1]:
-                if move == "split":
-                    return 1
+            if player_hand[0] == player_hand[1] and len(player_hand) == 2:
+                return "double down"
             elif dealer_card_value < 11:
-                if move == "double down":
-                    return 0
-                elif move == "stand" or "hit":
-                    return 1
-                else:
-                    return 2
+                return "double down"
             elif dealer_card_value == 11:
-                if move == "hit":
-                    return 0
-                elif move == "stand" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "hit"
 
         elif player_value == 12:
             if player_hand[0] == player_hand[1] and len(player_hand) == 2:
                 if dealer_card_value < 7:
-                    if move == "split":
-                        return 0
-                    else:
-                        return 1
+                    return "split"
                 else:
-                    if move == "hit":
-                        return 0
-                    else:
-                        return 1
+                    return "hit"
             elif dealer_card_value <4:
-                if move == "hit":
-                    return 0
-                elif move == "stand" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "hit"
             elif 4 <= dealer_card_value < 7:
-                if move == "stand":
-                    return 0
-                elif move == "hit" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "stand"
             else:
-                if move == "hit":
-                    return 0
-                elif move == "stand" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "hit"
 
         elif player_value == 13 or player_value == 14:
             if player_hand[0] == player_hand[1] and len(player_hand) == 2:
                 if dealer_card_value <= 7:
-                    if move == "split":
-                        return 0
-                    else:
-                        return 1
+                    return "split"
                 else:
-                    if move == "hit":
-                        return 0
-                    else:
-                        return 1
+                    return "hit"
             elif dealer_card_value < 7:
-                if move == "stand":
-                    return 0
-                elif move == "hit" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "stand"
             else:
-                if move == "hit":
-                    return 0
-                elif move == "stand" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "hit"
 
         elif player_value == 15 or player_value == 16:
             if player_hand[0] == player_hand[1] and len(player_hand) == 2:
-                return 0
-            elif player_hand[0] == player_hand[1] and len(player_hand) == 2:
-                return 1
+                return "split"
 
             elif dealer_card_value < 7:
-                if move == "stand":
-                    return 0
-                elif move == "hit" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "stand"
             else:
-                if move == "hit":
-                    return 0
-                elif move == "stand" or "double down":
-                    return 1
-                else:
-                    return 2
+                return "hit"
 
         elif player_value >= 17:
             if player_hand[0] == "Ace" and player_value == 17 and len(player_hand) == 2:
                 if dealer_card_value >= 7:
-                    if move == "hit":
-                        return 0
-                    elif move == "stand" or "double down":
-                        return 1
-                    else:
-                        return 2
+                    return "hit"
                 else:
-                    if move == "double down":
-                        return 0
-                    elif move == "stand" or "hit":
-                        return 1
-                    else:
-                        return 2
+                    return "double down"
             elif player_hand[0] == "Ace" and player_value == 18 and len(player_hand) == 2:
                 if dealer_card_value < 7:
-                    if move == "stand":
-                        return 0
-                    elif move == "hit" or "double down":
-                        return 1
-                    else:
-                        return 2
+                    return "stand"
                 else:
-                    if move == "hit":
-                        return 0
-                    elif move == "stand" or "double down":
-                        return 1
-                    else:
-                        return 2
+                    return "hit"
             elif player_hand[0] == "8" and player_hand[1] == "8" and len(player_hand) == 2:
-                    if move == "split":
-                        return 0
-                    else:
-                        return 1
+                return "split"
             else:
-                if dealer_card_value < 7:
-                    if move == "stand":
-                        return 0
-                    elif move == "hit" or "double down":
-                        return 1
-                    else:
-                        return 2
+                return "stand"
 
-        
-        move = ""
-# Run the game
 if __name__ == "__main__":
     play_blackjack()
