@@ -1,5 +1,6 @@
 from random import shuffle
 from time import time
+import sqlite3
 import experiment
 
 CARDS = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"]
@@ -14,7 +15,8 @@ def deal_card(shoe):
     return shoe.pop() if shoe else None
 
 def card_value(card):
-    return 10 if card in ["Jack", "Queen", "King"] else 11 if card == "Ace" else int(card)
+    return 10 if card in ["Jack", "Queen", "King"] else 11 if card == "Ace" else str(card)
+
 
 def hand_value(hand):
     value = sum(card_value(card) for card in hand)
@@ -24,8 +26,13 @@ def hand_value(hand):
         aces -= 1
     return value
 
-def play_player(shoe, dealer_hand, choice):
+def play_player(shoe, dealer_hand):
     hand = [deal_card(shoe), deal_card(shoe)]
+    response_data = experiment.get_blackjack_decision(hand, dealer_hand)
+    db_name = "gptresults.db"
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    choice = experiment.save_to_database(cursor, response_data)
     while True:
         experiment.main(hand, dealer_hand)
         if choice == "hit":
@@ -43,10 +50,8 @@ def play_dealer(shoe):
     return hand
 
 def play_round(shoe):
-    choice = experiment.save_to_database
-    print(choice)
     dealer_hand = play_dealer(shoe)
-    player_hand = play_player(shoe, dealer_hand, choice)
+    player_hand = play_player(shoe, dealer_hand)
     
     player_score, dealer_score = hand_value(player_hand), hand_value(dealer_hand)
 
