@@ -24,3 +24,6 @@ Currently, the system assumes two-card player hands and one dealer card.
 LLM behavior may vary slightly depending on their internal knowledge and version.
 
 You can expand the database schema or logic to simulate full hands and track game outcomes.
+
+## License
+MIT License. See LICENSE file for details.
